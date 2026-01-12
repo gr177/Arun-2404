@@ -1,0 +1,47 @@
+name: Terraform GCP Deploy
+
+on:
+  workflow_dispatch: 
+      
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./  # terraform code dir
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+      # with:
+         #terraform_version: 1.6.6
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/11987651584/locations/global/workloadIdentityPools/github-pool/providers/pool-github"
+          service_account: "github-actions@master-tangent-483414-c4.iam.gserviceaccount.com"
+          
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve
+
